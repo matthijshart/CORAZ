@@ -19,6 +19,8 @@
 <title>Finca El Corazón — Welkomstboekje</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root {
   --bg: #FAF6F0;
@@ -532,6 +534,69 @@ body {
   }
   body { background: #E8E0D4; }
 }
+/* ── MAP ── */
+.eten-map {
+  margin: 0 -16px 16px;
+  height: 280px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  z-index: 1;
+  position: relative;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12) !important;
+  font-family: var(--font-body);
+}
+.leaflet-popup-content {
+  margin: 10px 14px !important;
+  line-height: 1.5 !important;
+}
+.popup-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.popup-desc {
+  font-size: 12px;
+  color: var(--text-light);
+  font-weight: 300;
+}
+.popup-meta {
+  font-size: 11px;
+  color: var(--terracotta-dark);
+  font-weight: 500;
+  margin-top: 4px;
+}
+.rest-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.rest-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.rest-meta .rating {
+  color: var(--terracotta);
+  font-weight: 500;
+}
+.rest-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--terracotta-dark);
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: .3px;
+}
 </style>
 </head>
 <body>
@@ -720,6 +785,8 @@ function huis() {
     </div>
   `;
 }
+let etenMap = null;
+let etenMarkers = [];
 function eten() {
   const tabs = [
     {id:"arenal",label:"El Arenal",emoji:"🏖️"},
@@ -729,31 +796,32 @@ function eten() {
   ];
   const restaurants = {
     arenal: [
-      {name:"La Bambula",desc:"Hip, sfeervol en kindvriendelijk met binnentuin. Onze favoriete tafel staat helemaal achterin in de tuin, onder de lampjes.",fav:true},
-      {name:"Chabada",desc:"Zelfde eigenaar als La Bambula, veelzijdig menu. De pizza's en de Pad Thai zijn altijd goed."},
-      {name:"Jullieta's",desc:"Nieuw en gezellig voor 's avonds."},
-      {name:"Bohemians",desc:"Ibiza-stijl aan de boulevard met prachtig zeezicht. Gewoon goed eten.",fav:true},
-      {name:"El Campo",desc:"Ibiza-vibe met lekker eten in een relaxte sfeer.",fav:true},
-      {name:"Bar Flo",desc:"Ibiza-stijl, gezellige sfeer en gewoon goed eten.",fav:true},
+      {name:"La Bambula",desc:"Hip, sfeervol en kindvriendelijk met binnentuin. Onze favoriete tafel staat helemaal achterin in de tuin, onder de lampjes.",fav:true,lat:38.7872,lng:0.1882,price:"€€"},
+      {name:"Chabada",desc:"Zelfde eigenaar als La Bambula, veelzijdig menu. De pizza's en de Pad Thai zijn altijd goed.",lat:38.7868,lng:0.1890,price:"€€"},
+      {name:"Jullieta's",desc:"Nieuw en gezellig voor 's avonds.",lat:38.7865,lng:0.1875,price:"€€"},
+      {name:"Bohemians",desc:"Ibiza-stijl aan de boulevard met prachtig zeezicht. Gewoon goed eten.",fav:true,lat:38.7878,lng:0.1870,price:"€€"},
+      {name:"El Campo",desc:"Ibiza-vibe met lekker eten in een relaxte sfeer.",fav:true,lat:38.7862,lng:0.1865,price:"€€"},
+      {name:"Bar Flo",desc:"Ibiza-stijl, gezellige sfeer en gewoon goed eten.",fav:true,lat:38.7875,lng:0.1895,price:"€€"},
     ],
     boulevard: [
-      {name:"A Bordo",desc:"Verse vis in de haven. Prima tent."},
-      {name:"La Siesta",desc:"Onze favoriet! Heerlijk eten tussen de oude boulevard en El Arenal. Sfeer is top, zowel overdag als 's avonds.",fav:true},
-      {name:"Montgo di Bongo",desc:"Perfect voor een middagdrankje met uitzicht."},
-      {name:"Bar Tal Cual",desc:"Authentieke Spaanse tapas."},
-      {name:"Mira Luna",desc:"Gezellig ontbijten of koffiedrinken.",fav:true},
+      {name:"A Bordo",desc:"Verse vis in de haven. Prima tent.",lat:38.7955,lng:0.1730,price:"€€"},
+      {name:"La Siesta",desc:"Onze favoriet! Heerlijk eten tussen de oude boulevard en El Arenal. Sfeer is top, zowel overdag als 's avonds.",fav:true,lat:38.7918,lng:0.1808,price:"€€"},
+      {name:"Montgo di Bongo",desc:"Perfect voor een middagdrankje met uitzicht.",lat:38.7940,lng:0.1760,price:"€€"},
+      {name:"Bar Tal Cual",desc:"Authentieke Spaanse tapas.",lat:38.7948,lng:0.1745,price:"€"},
+      {name:"Mira Luna",desc:"Gezellig ontbijten of koffiedrinken.",fav:true,lat:38.7935,lng:0.1775,price:"€"},
     ],
     centrum: [
-      {name:"Temblor",desc:"Creatieve tapas met een unieke twist. Reserveren aanbevolen!",fav:true},
-      {name:"La Trastienda",desc:"Wijnbar met piepklein buitenterras. Tip: foie gras montadito en tonijn tataki.",fav:true},
-      {name:"Bar Mercat",desc:"In de markthal, leuk voor een borrel aan het einde van de dag."},
+      {name:"Temblor",desc:"Creatieve tapas met een unieke twist. Reserveren aanbevolen!",fav:true,lat:38.7855,lng:0.1655,price:"€€"},
+      {name:"La Trastienda",desc:"Wijnbar met piepklein buitenterras. Tip: foie gras montadito en tonijn tataki.",fav:true,lat:38.7848,lng:0.1648,price:"€€"},
+      {name:"Bar Mercat",desc:"In de markthal, leuk voor een borrel aan het einde van de dag.",lat:38.7852,lng:0.1662,price:"€"},
     ],
     speciaal: [
-      {name:"Cala Clemence",desc:"Restaurant op een klif met schitterend uitzicht."},
-      {name:"Amantes (Moraira)",desc:"Elegant, direct aan zee."},
-      {name:"Masena & Terra",desc:"Sfeervol, dichtbij."},
-      {name:"Vall de Cavall",desc:"Prachtige manege waar je heerlijk kunt lunchen. Unieke sfeer!",fav:true},
-      {name:"Beachclub LULU",desc:"Hip en relaxed."},
+      {name:"Cala Clemence",desc:"Restaurant op een klif met schitterend uitzicht bij Portitxol. Reserveer ruim van tevoren!",lat:38.7523,lng:0.2238,rating:4.1,reviews:3855,price:"€€",phone:"+34 966 47 21 89",website:"http://www.calaclemence.com"},
+      {name:"Amantes (Moraira)",desc:"Elegant, direct aan zee. Bekend om verse vis, paella en een prachtige zonsondergang.",lat:38.6840,lng:0.1234,rating:4.3,reviews:1291,price:"€€€",phone:"+34 616 74 91 67",website:"https://www.amantesdemoraira.com"},
+      {name:"Masena",desc:"Uitstekend vlees, mooie presentatie en warme bediening. Gesloten op dinsdag.",lat:38.7689,lng:0.1486,rating:4.7,reviews:1483,price:"€€€",phone:"+34 965 79 37 64",website:"http://www.restaurantemasena.es"},
+      {name:"Terra Jávea",desc:"Verborgen pareltje met tropische tuin. Creatieve gerechten en heerlijke cocktails. Gesloten op maandag.",lat:38.7647,lng:0.1849,rating:4.5,reviews:567,price:"€€",phone:"+34 605 41 19 11",website:"https://terrajavea.com"},
+      {name:"Vall de Cavall",desc:"Prachtige manege waar je heerlijk kunt lunchen. Unieke sfeer, zwembad in de zomer! Gesloten op maandag.",fav:true,lat:38.7648,lng:0.1103,rating:4.7,reviews:1611,price:"€€€",phone:"+34 965 05 84 75",website:"http://www.valldecavall.es"},
+      {name:"Beachclub LULU",desc:"Bohemian beachclub met live muziek. Relaxte sfeer, ideaal voor een zondagbrunch of sundowner.",lat:38.7580,lng:0.1490,rating:4.1,reviews:761,price:"€€",phone:"+34 965 99 53 05",website:"https://lulubeachclub.com"},
     ],
   };
   const descs = {
@@ -762,6 +830,9 @@ function eten() {
     centrum: "Dichtbij het huis en nog redelijk onontdekt — authentiek en verrassend goed.",
     speciaal: "Onze speciale aanraders voor als je iets bijzonders wilt.",
   };
+  const list = restaurants[etenTab]||[];
+  // schedule map init after DOM update
+  setTimeout(()=>initEtenMap(list), 50);
   return `
     <div class="section-head fade-up">
       <span class="section-emoji">🍽️</span>
@@ -774,17 +845,64 @@ function eten() {
         </button>
       `).join("")}
     </div>
+    <div class="eten-map fade-up" id="etenMap"></div>
     <p class="area-desc fade-up">${descs[etenTab]}</p>
-    ${(restaurants[etenTab]||[]).map((r,i)=>`
-      <div class="card rest-card ${r.fav?'fav':''} fade-up" style="animation-delay:${(i+3)*.06}s">
+    ${list.map((r,i)=>`
+      <div class="card rest-card ${r.fav?'fav':''} fade-up" style="animation-delay:${(i+3)*.06}s" onclick="focusMapMarker(${i})">
         <div class="rest-header">
           <span class="rest-name">${r.name}</span>
           ${r.fav?'<span class="fav-badge">❤️ favoriet</span>':''}
         </div>
         <p class="rest-desc">${r.desc}</p>
+        ${r.rating||r.price?`
+          <div class="rest-meta">
+            ${r.rating?`<span class="rating">★ ${r.rating}</span>`:''}
+            ${r.reviews?`<span>${r.reviews.toLocaleString()} reviews</span>`:''}
+            ${r.price?`<span>${r.price}</span>`:''}
+          </div>
+        `:''}
+        ${r.website?`<a class="rest-link" href="${r.website}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Bekijk website →</a>`:''}
       </div>
     `).join("")}
   `;
+}
+function initEtenMap(list) {
+  const el = document.getElementById("etenMap");
+  if (!el) return;
+  if (etenMap) { etenMap.remove(); etenMap = null; }
+  etenMarkers = [];
+  etenMap = L.map('etenMap', { scrollWheelZoom:false, zoomControl:true, attributionControl:false });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom:18 }).addTo(etenMap);
+  const bounds = [];
+  list.forEach((r,i) => {
+    if (!r.lat) return;
+    const size = r.fav ? 14 : 10;
+    const color = r.fav ? '#C2855A' : '#2D2518';
+    const icon = L.divIcon({
+      className:'',
+      html:`<div style="width:${size}px;height:${size}px;background:${color};border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.25);"></div>`,
+      iconSize:[size,size],
+      iconAnchor:[size/2,size/2]
+    });
+    const marker = L.marker([r.lat,r.lng],{icon}).addTo(etenMap);
+    marker.bindPopup(`
+      <div class="popup-name">${r.fav?'❤️ ':''}${r.name}</div>
+      <div class="popup-desc">${r.desc.substring(0,80)}${r.desc.length>80?'…':''}</div>
+      ${r.rating?`<div class="popup-meta">★ ${r.rating} · ${r.reviews.toLocaleString()} reviews · ${r.price}</div>`
+        :r.price?`<div class="popup-meta">${r.price}</div>`:''}
+    `, {maxWidth:220});
+    etenMarkers.push(marker);
+    bounds.push([r.lat,r.lng]);
+  });
+  if (bounds.length) etenMap.fitBounds(bounds, {padding:[30,30]});
+}
+function focusMapMarker(i) {
+  if (etenMarkers[i]) {
+    const ll = etenMarkers[i].getLatLng();
+    etenMap.setView(ll, 15, {animate:true});
+    etenMarkers[i].openPopup();
+    document.getElementById("contentEl").scrollTo({top:0,behavior:"smooth"});
+  }
 }
 function stranden() {
   const data = [
