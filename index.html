@@ -918,11 +918,11 @@ function eten() {
     </div>
     <div class="eten-map fade-up" id="etenMap"></div>
     <p class="area-desc fade-up">${descs[etenTab]}</p>
-    ${list.map((r,i)=>`
+    ${list.map((r,i)=>{const hrt=ic('heart','10px');return `
       <div class="card rest-card ${r.fav?'fav':''} fade-up" style="animation-delay:${(i+3)*.06}s" onclick="focusMapMarker(${i})">
         <div class="rest-header">
           <span class="rest-name">${r.name}</span>
-          ${r.fav?'<span class="fav-badge">${ic('heart','10px')} favoriet</span>':''}
+          ${r.fav?'<span class="fav-badge">'+hrt+' favoriet</span>':''}
         </div>
         <p class="rest-desc">${r.desc}</p>
         ${r.rating||r.price?`
@@ -934,7 +934,7 @@ function eten() {
         `:''}
         ${r.website?`<a class="rest-link" href="${r.website}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Bekijk website →</a>`:''}
       </div>
-    `).join("")}
+    `}).join("")}
   `;
 }
 function initEtenMap(list) {
