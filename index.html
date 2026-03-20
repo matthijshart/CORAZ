@@ -43,29 +43,42 @@
   --font-display: "Cormorant Garamond", Georgia, serif;
   --font-body: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html { height:100%; background:var(--bg); }
+html {
+  height: 100%;
+  height: 100dvh;
+  background: var(--bg);
+}
 body {
   font-family: var(--font-body);
   color: var(--text);
   background: var(--bg);
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
 }
 #app {
   max-width: 480px;
   margin: 0 auto;
   height: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
   background: var(--bg);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
 }
 /* ── HEADER ── */
 .header {
-  padding: 14px 20px 8px;
+  padding: calc(var(--safe-top) + 14px) 20px 8px;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -101,6 +114,7 @@ body {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
 }
 .content::-webkit-scrollbar { display:none; }
 .page { padding: 0 16px 120px; }
@@ -137,6 +151,7 @@ body {
   border-radius: 12px;
   min-width: 54px;
   flex-shrink: 0;
+  touch-action: manipulation;
   font-family: var(--font-body);
   transition: all .25s cubic-bezier(.4,0,.2,1);
 }
@@ -305,6 +320,7 @@ body {
   white-space: nowrap;
   font-family: var(--font-body);
   transition: all .25s;
+  touch-action: manipulation;
 }
 .tab-btn:active { transform:scale(.95); }
 .tab-btn.active {
@@ -438,6 +454,7 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,.03);
 }
 .nummer-card:active { transform:scale(.97); background: var(--sand); }
+.nummer-card { touch-action: manipulation; }
 .nummer-icon { font-size: 24px; flex-shrink:0; }
 .nummer-info { flex:1; display:flex; flex-direction:column; }
 .nummer-label { font-size: 14px; font-weight:500; color:var(--text); }
@@ -487,6 +504,7 @@ body {
   transition: all .2s;
 }
 .toc-item:active { transform:scale(.96); background:var(--sand-dark); }
+.toc-item { touch-action: manipulation; }
 .toc-icon { font-size: 18px; }
 .toc-text { font-size: 13px; font-weight:500; color:var(--text-mid); }
 /* ── DIVIDER ── */
@@ -543,6 +561,10 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,.06);
   z-index: 1;
   position: relative;
+  touch-action: none;
+}
+@media (max-height: 667px) {
+  .eten-map { height: 220px; }
 }
 .leaflet-popup-content-wrapper {
   border-radius: 12px !important;
@@ -871,7 +893,7 @@ function initEtenMap(list) {
   if (!el) return;
   if (etenMap) { etenMap.remove(); etenMap = null; }
   etenMarkers = [];
-  etenMap = L.map('etenMap', { scrollWheelZoom:false, zoomControl:true, attributionControl:false });
+  etenMap = L.map('etenMap', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, tap:false, touchZoom:true, dragging:!L.Browser.mobile });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom:18 }).addTo(etenMap);
   const bounds = [];
   list.forEach((r,i) => {
@@ -895,6 +917,8 @@ function initEtenMap(list) {
     bounds.push([r.lat,r.lng]);
   });
   if (bounds.length) etenMap.fitBounds(bounds, {padding:[30,30]});
+  // iOS needs a second invalidateSize after layout settles
+  setTimeout(()=>{ if(etenMap) etenMap.invalidateSize(); }, 200);
 }
 function focusMapMarker(i) {
   if (etenMarkers[i]) {
