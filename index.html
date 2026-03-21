@@ -19,8 +19,7 @@
 <title>Finca El Corazón — Welkomstboekje</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet loaded lazily when eten tab is opened -->
 <style>
 :root {
   --bg: #FAF6F0;
@@ -937,9 +936,26 @@ function eten() {
     `}).join("")}
   `;
 }
+let leafletLoaded = false;
+function loadLeaflet(cb) {
+  if (leafletLoaded) { cb(); return; }
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(link);
+  const script = document.createElement('script');
+  script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  script.onload = function() { leafletLoaded = true; cb(); };
+  script.onerror = function() { console.warn('Leaflet kon niet geladen worden'); };
+  document.head.appendChild(script);
+}
 function initEtenMap(list) {
   const el = document.getElementById("etenMap");
   if (!el) return;
+  if (typeof L === 'undefined') {
+    loadLeaflet(function() { initEtenMap(list); });
+    return;
+  }
   if (etenMap) { etenMap.remove(); etenMap = null; }
   etenMarkers = [];
   etenMap = L.map('etenMap', { scrollWheelZoom:false, zoomControl:true, attributionControl:false, tap:false, touchZoom:true, dragging:!L.Browser.mobile });
